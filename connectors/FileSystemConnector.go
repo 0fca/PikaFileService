@@ -72,7 +72,7 @@ func RemoveFile(dst string) (err error) {
 		return err
 	} else {
 		if dfi.IsDir() {
-			fmt.Println("This is a directory, this is just a standard log, no action is required")
+			log.Println("This is a directory, this is just a standard log, no action is required")
 		}
 	}
 

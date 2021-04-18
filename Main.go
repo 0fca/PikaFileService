@@ -24,8 +24,10 @@ func main() {
 	flag.BoolVar(&enableSync, "s", true, "Set this to false to disallow automatic sync on start")
 	flag.Parse()
 
+	var f *os.File
+
 	if !enableDebug {
-		handleOutputToFile(logPath)
+		f = handleOutputToFile(logPath)
 	}
 
 	log.Println("PikaFileSync is starting...")
@@ -52,13 +54,14 @@ func main() {
 	}
 	log.Println(syncMsg)
 	StartFWatch(c.Folders, c.Dst)
+	defer f.Close()
 }
 
-func handleOutputToFile(outPath string) {
+func handleOutputToFile(outPath string) *os.File {
 	f, err := os.OpenFile(outPath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0766)
 	if err != nil {
 		log.Fatalf("error opening file: %v", err)
 	}
-	defer f.Close()
 	log.SetOutput(f)
+	return f
 }
