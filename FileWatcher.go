@@ -12,10 +12,9 @@ import (
 	"github.com/radovskyb/watcher"
 )
 
-//TODO: Log to file
 func StartFWatch(folders []string, dstPath string) {
 	w := watcher.New()
-	w.SetMaxEvents(2)
+	w.SetMaxEvents(2) //Set to 2 on purpose, need to handle Create and Write events at once
 	w.FilterOps(watcher.Rename, watcher.Move, watcher.Remove, watcher.Create, watcher.Write)
 	r := regexp.MustCompile("(\\w|[-.])+$")
 	w.AddFilterHook(watcher.RegexFilterHook(r, false))
