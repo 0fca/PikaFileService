@@ -40,7 +40,15 @@ func main() {
 		log.Fatal(err)
 	}
 
-	StartFWatch(c.Folders, c.Dst)
+	// Initialize PikaCloud handler
+	pikaCloudHandler := NewPikaCloudHandler(c.PikaCloud)
+	if pikaCloudHandler.IsEnabled() {
+		log.Println("PikaCloud integration enabled")
+	} else {
+		log.Println("PikaCloud integration disabled")
+	}
+
+	StartFWatchWithPikaCloud(c.Folders, c.Dst, c.WorkingDirectory, pikaCloudHandler)
 }
 
 func handleErrorOutput(outPath string) {
@@ -48,7 +56,6 @@ func handleErrorOutput(outPath string) {
 	if err != nil {
 		log.Fatalf("error opening file: %v", err)
 	}
-	defer f.Close()
 
 	log.SetOutput(f)
 }

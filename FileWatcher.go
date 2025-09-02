@@ -12,22 +12,33 @@ import (
 	"github.com/radovskyb/watcher"
 )
 
-//TODO: Log to file
-func StartFWatch(folders []string, dstPath string) {
+// TODO: Log to file
+func StartFWatch(folders []string, dstPath string, workDir string) {
+	StartFWatchWithPikaCloud(folders, dstPath, workDir, &PikaCloudHandler{enabled: false})
+}
+
+func StartFWatchWithPikaCloud(folders []string, dstPath string, workDir string, pikaCloudHandler *PikaCloudHandler) {
+	log.Println("Starting to watch folders:", folders)
 	w := watcher.New()
-	w.SetMaxEvents(2)
+	w.SetMaxEvents(10)
 	w.FilterOps(watcher.Rename, watcher.Move, watcher.Remove, watcher.Create, watcher.Write)
-	r := regexp.MustCompile("(\\w|[-.])+$")
+	r := regexp.MustCompile(`(\w|[-.])+$`)
 	w.AddFilterHook(watcher.RegexFilterHook(r, false))
 
 	go func() {
 		for {
 			select {
 			case event := <-w.Event:
-				executeFilesystemOperation(event, dstPath)
+				log.Println("File Event Detected:", event.Path)
+				if pikaCloudHandler != nil && pikaCloudHandler.enabled {
+					pikaCloudHandler.HandleFileOperation(event, dstPath, workDir)
+				} else {
+					executeFilesystemOperation(event, dstPath, workDir)
+				}
 			case err := <-w.Error:
 				log.Fatalln(err)
 			case <-w.Closed:
+				log.Println("Watcher closed")
 				return
 			}
 		}
@@ -44,10 +55,11 @@ func StartFWatch(folders []string, dstPath string) {
 	}
 }
 
-func executeFilesystemOperation(event watcher.Event, dstPath string) {
+func executeFilesystemOperation(event watcher.Event, dstPath string, workDir string) {
 	switch {
 	case event.Op == watcher.Create:
-		dstPath = createDestinationPath(event.Path, dstPath)
+		log.Println("File Creation Detected:", event.Path)
+		dstPath = createDestinationPath(event.Path, dstPath, workDir)
 		if !event.IsDir() {
 			if err := connectors.CopyFile(event.Path, dstPath); err != nil {
 				log.Println(err.Error())
@@ -60,18 +72,21 @@ func executeFilesystemOperation(event watcher.Event, dstPath string) {
 			}
 		}
 	case event.Op == watcher.Rename:
-		dstBeforeRename := createDestinationPath(event.OldPath, dstPath)
-		dstPath = createDestinationPath(event.Path, dstPath)
+		log.Println("File Rename Detected:", event.Path)
+		dstBeforeRename := createDestinationPath(event.OldPath, dstPath, workDir)
+		dstPath = createDestinationPath(event.Path, dstPath, workDir)
 		if err := connectors.RenameFile(dstPath, event.Path, dstBeforeRename); err != nil {
 			log.Println(err.Error())
 		}
 	case event.Op == watcher.Remove:
-		dstPath = createDestinationPath(event.OldPath, dstPath)
+		log.Println("File Deletion Detected:", event.Path)
+		dstPath = createDestinationPath(event.OldPath, dstPath, workDir)
 		if err := connectors.RemoveFile(dstPath); err != nil {
 			log.Println(err.Error())
 		}
 	case event.Op == watcher.Write:
-		dstPath = createDestinationPath(event.Path, dstPath)
+		log.Println("File Modification Detected:", event.Path)
+		dstPath = createDestinationPath(event.Path, dstPath, workDir)
 		if !event.IsDir() {
 			if err := connectors.CopyFile(event.Path, dstPath); err != nil {
 				log.Println(err.Error())
@@ -80,7 +95,9 @@ func executeFilesystemOperation(event watcher.Event, dstPath string) {
 	}
 }
 
-func createDestinationPath(path string, dstPath string) string {
-	cwd, _ := os.Getwd()
-	return filepath.Join(dstPath, strings.Replace(path, cwd, "", -1))
+func createDestinationPath(path string, dstPath string, cwd string) string {
+	log.Println("Current working directory:", cwd)
+	log.Println("Destination path:", dstPath)
+	log.Println("File path:", path)
+	return filepath.Join(dstPath, strings.ReplaceAll(path, cwd, ""))
 }

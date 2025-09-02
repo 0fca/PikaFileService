@@ -5,6 +5,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"log"
 )
 
 func copyFileContents(src, dst string) (err error) {
@@ -27,18 +28,22 @@ func copyFileContents(src, dst string) (err error) {
 		return
 	}
 	err = out.Sync()
-	return
+	return err
 }
 
 func CopyFile(src, dst string) (err error) {
 	sfi, err := os.Stat(src)
+	log.Println("Copying file from", src, "to", dst)
 	if err != nil {
 		return err
 	}
+	log.Println("Source file info:", sfi.Name(), sfi.Size(), sfi.Mode())
 	if sfi.Mode().IsRegular() {
+		log.Println("Source file is a regular file, can stat?")
 		dfi, err := os.Stat(dst)
 		if err != nil {
 			if !os.IsNotExist(err) {
+				log.Println("Error stating destination file:", err)
 				return err
 			}
 		} else {
@@ -49,12 +54,13 @@ func CopyFile(src, dst string) (err error) {
 				return fmt.Errorf("%s is not the same as %s", sfi.Name(), dfi.Name())
 			}
 		}
-		if err = os.Link(src, dst); err == nil {
+
+		err = copyFileContents(src, dst)
+		if err != nil {
 			return err
 		}
-		err = copyFileContents(src, dst)
 	}
-	return
+	return err
 }
 
 func RemoveFile(dst string) (err error) {
