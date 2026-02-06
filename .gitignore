@@ -8,3 +8,5 @@
 .idea
 config.json
 *.service
+build/
+*.log

@@ -1,8 +1,10 @@
 BINARY_NAME=pikafileservice
 MAIN_FILE=Main.go
 SERVICE_NAME=pikafileservice
+VERSION?=1.0.0
+ARCH?=amd64
 
-.PHONY: build clean install test run build-tools service-install service-uninstall service-start service-stop service-restart service-status service-logs
+.PHONY: build clean install test run build-tools build-deb service-install service-uninstall service-start service-stop service-restart service-status service-logs
 
 # Build targets
 build:
@@ -18,12 +20,17 @@ clean:
 	go clean
 	rm -f ${BINARY_NAME}
 	rm -f tools/test_pikacloud
+	rm -rf build/
 
 test:
 	go test ./...
 
 run:
 	go run ${MAIN_FILE}
+
+# Packaging targets
+build-deb: build-release
+	./scripts/build_deb.sh $(VERSION) $(ARCH)
 
 # Service management targets
 service-install: build

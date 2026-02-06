@@ -3,23 +3,29 @@ package connectors
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"log"
 	"mime/multipart"
 	"net/http"
+	"net/http/cookiejar"
+	"net/url"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 )
 
 // PikaCloudConfig holds configuration for PikaCloud API connection
 type PikaCloudConfig struct {
-	BaseURL    string `json:"baseUrl"`    // e.g., "https://pikacore.example.com"
-	BucketID   string `json:"bucketId"`   // Target bucket ID for uploads
-	Timeout    int    `json:"timeout"`    // Request timeout in seconds
-	RetryCount int    `json:"retryCount"` // Number of retry attempts
+	BaseURL    string                  `json:"baseUrl"`    // e.g., "https://pikacore.example.com"
+	BucketID   string                  `json:"bucketId"`   // Target bucket ID for uploads
+	AuthToken  string                  `json:"authToken"`  // Static JWT token for .AspNet.Identity cookie (fallback)
+	OAuth2     *OAuth2DeviceFlowConfig `json:"oauth2"`     // OAuth2 Device Flow config (preferred over static AuthToken)
+	Timeout    int                     `json:"timeout"`    // Request timeout in seconds
+	RetryCount int                     `json:"retryCount"` // Number of retry attempts
 }
 
 // UploadResponse represents the response from PikaCore upload API
@@ -32,8 +38,20 @@ type UploadResponse struct {
 
 // PikaCloudConnector handles file uploads to PikaCore storage API
 type PikaCloudConnector struct {
-	config     PikaCloudConfig
-	httpClient *http.Client
+	config         PikaCloudConfig
+	httpClient     *http.Client
+	csrfToken      string
+	deviceFlowAuth *DeviceFlowAuth
+}
+
+// RateLimitError represents a 429 Too Many Requests response
+type RateLimitError struct {
+	RetryAfter time.Duration
+	Message    string
+}
+
+func (e *RateLimitError) Error() string {
+	return e.Message
 }
 
 // NewPikaCloudConnector creates a new PikaCloudConnector instance
@@ -47,12 +65,141 @@ func NewPikaCloudConnector(config PikaCloudConfig) *PikaCloudConnector {
 		config.RetryCount = 3 // Default 3 retries
 	}
 
-	return &PikaCloudConnector{
+	jar, err := cookiejar.New(nil)
+	if err != nil {
+		log.Printf("Warning: failed to create cookie jar: %v", err)
+	}
+
+	connector := &PikaCloudConnector{
 		config: config,
 		httpClient: &http.Client{
 			Timeout: timeout,
+			Jar:     jar,
 		},
 	}
+
+	// Set auth cookie: prefer OAuth2 device flow, fallback to static token
+	if config.OAuth2 != nil {
+		dfa, err := NewDeviceFlowAuth(*config.OAuth2)
+		if err != nil {
+			log.Printf("Warning: OAuth2 device flow initialization failed: %v", err)
+			log.Println("Falling back to static AuthToken if available")
+		} else {
+			connector.deviceFlowAuth = dfa
+			// Set initial auth cookie from device flow token
+			if err := connector.refreshAuthToken(); err != nil {
+				log.Printf("Warning: failed to set initial auth cookie from OAuth2: %v", err)
+			}
+		}
+	}
+
+	// Fallback: set static auth cookie if no device flow auth and static token provided
+	if connector.deviceFlowAuth == nil && config.AuthToken != "" && jar != nil {
+		connector.setAuthCookie()
+	}
+
+	return connector
+}
+
+// setAuthCookie adds the .AspNet.Identity JWT cookie to the cookie jar
+func (pc *PikaCloudConnector) setAuthCookie() {
+	baseURL, err := url.Parse(pc.config.BaseURL)
+	if err != nil {
+		log.Printf("Warning: failed to parse base URL for auth cookie: %v", err)
+		return
+	}
+	pc.httpClient.Jar.SetCookies(baseURL, []*http.Cookie{
+		{
+			Name:  ".AspNet.Identity",
+			Value: pc.config.AuthToken,
+			Path:  "/",
+		},
+	})
+}
+
+// refreshAuthToken gets a fresh access token from the device flow auth and updates the .AspNet.Identity cookie.
+// This is called before each request to ensure the cookie contains a non-expired JWT.
+func (pc *PikaCloudConnector) refreshAuthToken() error {
+	if pc.deviceFlowAuth == nil {
+		return nil // Using static token, no refresh needed
+	}
+
+	token, err := pc.deviceFlowAuth.GetAccessToken()
+	if err != nil {
+		return fmt.Errorf("failed to refresh OAuth2 access token: %v", err)
+	}
+
+	baseURL, err := url.Parse(pc.config.BaseURL)
+	if err != nil {
+		return fmt.Errorf("failed to parse base URL for auth cookie: %v", err)
+	}
+	pc.httpClient.Jar.SetCookies(baseURL, []*http.Cookie{
+		{
+			Name:  ".AspNet.Identity",
+			Value: token,
+			Path:  "/",
+		},
+	})
+
+	return nil
+}
+
+// FetchCSRFToken retrieves the CSRF token from the Storage Index endpoint.
+// The Index action has [GenerateAntiforgeryTokenCookie] which sets both the
+// PikaCore.Antiforgery validation cookie and a RequestVerificationToken cookie.
+// The RequestVerificationToken value is then sent as the X-CSRF-TOKEN header
+// on subsequent upload requests.
+func (pc *PikaCloudConnector) FetchCSRFToken() error {
+	indexURL := fmt.Sprintf("%s/Api/v1/Storage/Index",
+		strings.TrimRight(pc.config.BaseURL, "/"))
+
+	request, err := http.NewRequest("GET", indexURL, nil)
+	if err != nil {
+		return fmt.Errorf("failed to create CSRF token request: %v", err)
+	}
+	request.Header.Set("User-Agent", "PikaFileService/1.0")
+
+	response, err := pc.httpClient.Do(request)
+	if err != nil {
+		return fmt.Errorf("failed to fetch CSRF token: %v", err)
+	}
+	defer response.Body.Close()
+
+	if response.StatusCode != http.StatusOK {
+		return fmt.Errorf("CSRF token request failed with status %d (expected 200 OK)", response.StatusCode)
+	}
+
+	// Extract RequestVerificationToken from cookies captured by the jar
+	baseURL, err := url.Parse(pc.config.BaseURL)
+	if err != nil {
+		return fmt.Errorf("failed to parse base URL: %v", err)
+	}
+	for _, cookie := range pc.httpClient.Jar.Cookies(baseURL) {
+		if cookie.Name == "RequestVerificationToken" {
+			pc.csrfToken = cookie.Value
+			log.Println("Successfully retrieved CSRF token from Storage Index")
+			return nil
+		}
+	}
+
+	return fmt.Errorf("RequestVerificationToken cookie not found in Index response")
+}
+
+// parseRetryAfter parses the Retry-After header value into a duration
+func parseRetryAfter(header string) time.Duration {
+	if header == "" {
+		return 5 * time.Second
+	}
+	if seconds, err := strconv.Atoi(header); err == nil {
+		return time.Duration(seconds) * time.Second
+	}
+	if t, err := http.ParseTime(header); err == nil {
+		duration := time.Until(t)
+		if duration > 0 {
+			return duration
+		}
+	}
+	return 5 * time.Second
 }
 
 // UploadFile uploads a file to PikaCore storage using the StorageApiController
@@ -69,6 +216,16 @@ func (pc *PikaCloudConnector) UploadFile(filePath string) (*UploadResponse, erro
 
 	log.Printf("Starting upload of file: %s to PikaCore", filePath)
 
+	// Refresh auth token (auto-refresh from OAuth2 device flow if configured)
+	if err := pc.refreshAuthToken(); err != nil {
+		log.Printf("Warning: auth token refresh failed: %v", err)
+	}
+
+	// Fetch CSRF token before upload
+	if err := pc.FetchCSRFToken(); err != nil {
+		return nil, fmt.Errorf("failed to retrieve CSRF token: %v", err)
+	}
+
 	// Attempt upload with retry logic
 	var lastErr error
 	for attempt := 1; attempt <= pc.config.RetryCount; attempt++ {
@@ -79,7 +236,11 @@ func (pc *PikaCloudConnector) UploadFile(filePath string) (*UploadResponse, erro
 		}
 
 		lastErr = err
-		if attempt < pc.config.RetryCount {
+		var rateLimitErr *RateLimitError
+		if errors.As(err, &rateLimitErr) {
+			log.Printf("Rate limited on attempt %d, waiting %v before retry", attempt, rateLimitErr.RetryAfter)
+			time.Sleep(rateLimitErr.RetryAfter)
+		} else if attempt < pc.config.RetryCount {
 			log.Printf("Upload attempt %d failed, retrying: %v", attempt, err)
 			time.Sleep(time.Duration(attempt) * time.Second) // Exponential backoff
 		}
@@ -145,6 +306,9 @@ func (pc *PikaCloudConnector) attemptUpload(filePath string, attempt int) (*Uplo
 	// Set headers
 	request.Header.Set("Content-Type", writer.FormDataContentType())
 	request.Header.Set("User-Agent", "PikaFileService/1.0")
+	if pc.csrfToken != "" {
+		request.Header.Set("X-CSRF-TOKEN", pc.csrfToken)
+	}
 
 	log.Printf("Attempt %d: Uploading %s (%d bytes) to %s",
 		attempt, fileName, fileInfo.Size(), uploadURL)
@@ -160,6 +324,15 @@ func (pc *PikaCloudConnector) attemptUpload(filePath string, attempt int) (*Uplo
 	responseBody, err := io.ReadAll(response.Body)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read response: %v", err)
+	}
+
+	// Handle rate limiting (429 Too Many Requests)
+	if response.StatusCode == http.StatusTooManyRequests {
+		retryAfter := parseRetryAfter(response.Header.Get("Retry-After"))
+		return nil, &RateLimitError{
+			RetryAfter: retryAfter,
+			Message:    fmt.Sprintf("rate limited (429), retry after %v", retryAfter),
+		}
 	}
 
 	// Check response status
@@ -205,6 +378,16 @@ func (pc *PikaCloudConnector) UploadFileWithCustomPath(filePath, targetPath stri
 
 	log.Printf("Starting upload of file: %s to target path: %s", filePath, targetPath)
 
+	// Refresh auth token (auto-refresh from OAuth2 device flow if configured)
+	if err := pc.refreshAuthToken(); err != nil {
+		log.Printf("Warning: auth token refresh failed: %v", err)
+	}
+
+	// Fetch CSRF token before upload
+	if err := pc.FetchCSRFToken(); err != nil {
+		return nil, fmt.Errorf("failed to retrieve CSRF token: %v", err)
+	}
+
 	// Attempt upload with retry logic
 	var lastErr error
 	for attempt := 1; attempt <= pc.config.RetryCount; attempt++ {
@@ -216,7 +399,11 @@ func (pc *PikaCloudConnector) UploadFileWithCustomPath(filePath, targetPath stri
 		}
 
 		lastErr = err
-		if attempt < pc.config.RetryCount {
+		var rateLimitErr *RateLimitError
+		if errors.As(err, &rateLimitErr) {
+			log.Printf("Rate limited on attempt %d, waiting %v before retry", attempt, rateLimitErr.RetryAfter)
+			time.Sleep(rateLimitErr.RetryAfter)
+		} else if attempt < pc.config.RetryCount {
 			log.Printf("Upload attempt %d failed, retrying: %v", attempt, err)
 			time.Sleep(time.Duration(attempt) * time.Second)
 		}
@@ -275,6 +462,9 @@ func (pc *PikaCloudConnector) attemptUploadWithPath(filePath, targetPath string,
 
 	request.Header.Set("Content-Type", writer.FormDataContentType())
 	request.Header.Set("User-Agent", "PikaFileService/1.0")
+	if pc.csrfToken != "" {
+		request.Header.Set("X-CSRF-TOKEN", pc.csrfToken)
+	}
 
 	log.Printf("Attempt %d: Uploading %s (%d bytes) to %s with target path: %s",
 		attempt, fileName, fileInfo.Size(), uploadURL, targetPath)
@@ -288,6 +478,15 @@ func (pc *PikaCloudConnector) attemptUploadWithPath(filePath, targetPath string,
 	responseBody, err := io.ReadAll(response.Body)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read response: %v", err)
+	}
+
+	// Handle rate limiting (429 Too Many Requests)
+	if response.StatusCode == http.StatusTooManyRequests {
+		retryAfter := parseRetryAfter(response.Header.Get("Retry-After"))
+		return nil, &RateLimitError{
+			RetryAfter: retryAfter,
+			Message:    fmt.Sprintf("rate limited (429), retry after %v", retryAfter),
+		}
 	}
 
 	if response.StatusCode != http.StatusCreated {
@@ -306,6 +505,11 @@ func (pc *PikaCloudConnector) attemptUploadWithPath(filePath, targetPath string,
 
 // TestConnection tests the connection to PikaCore API
 func (pc *PikaCloudConnector) TestConnection() error {
+	// Refresh auth token before testing connection
+	if err := pc.refreshAuthToken(); err != nil {
+		log.Printf("Warning: auth token refresh failed before connection test: %v", err)
+	}
+
 	testURL := fmt.Sprintf("%s/Api/v1/Storage/Index",
 		strings.TrimRight(pc.config.BaseURL, "/"))
 
@@ -321,7 +525,11 @@ func (pc *PikaCloudConnector) TestConnection() error {
 		return fmt.Errorf("failed to connect to PikaCore: %v", err)
 	}
 	defer response.Body.Close()
+	log.Printf("%d", response.StatusCode)
+	if response.StatusCode != http.StatusOK {
+		return fmt.Errorf("connection test failed with status %d (expected 200 OK)", response.StatusCode)
+	}
 
-	log.Printf("Connection test to PikaCore: Status %d", response.StatusCode)
+	log.Printf("Connection test to PikaCore: Status %d OK", response.StatusCode)
 	return nil
 }
