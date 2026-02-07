@@ -34,9 +34,13 @@ mkdir -p "${PROJECT_DIR}/${PKG_DIR}/lib/systemd/system"
 cp "${PROJECT_DIR}/${PKG_NAME}" "${PROJECT_DIR}/${PKG_DIR}/opt/${PKG_NAME}/${PKG_NAME}"
 chmod 755 "${PROJECT_DIR}/${PKG_DIR}/opt/${PKG_NAME}/${PKG_NAME}"
 
-# -- Copy systemd service file --
+# -- Copy the systemd service file (template — __SERVICE_USER__ is replaced at install time) --
 cp "${PROJECT_DIR}/${PKG_NAME}.service" "${PROJECT_DIR}/${PKG_DIR}/lib/systemd/system/${PKG_NAME}.service"
 chmod 644 "${PROJECT_DIR}/${PKG_DIR}/lib/systemd/system/${PKG_NAME}.service"
+
+# -- Copy the interactive configuration wizard --
+cp "${PROJECT_DIR}/scripts/configure.sh" "${PROJECT_DIR}/${PKG_DIR}/opt/${PKG_NAME}/configure.sh"
+chmod 755 "${PROJECT_DIR}/${PKG_DIR}/opt/${PKG_NAME}/configure.sh"
 
 # -- Ship a default config (placeholder values) --
 cat > "${PROJECT_DIR}/${PKG_DIR}/opt/${PKG_NAME}/config.json" << 'DEFAULTCFG'
@@ -59,7 +63,7 @@ Section: utils
 Priority: optional
 Architecture: ${ARCH}
 Installed-Size: ${INSTALLED_SIZE}
-Maintainer: Łukasz Bownik <lukasz@lukas-bownik.net>
+Maintainer: Łukasz Bownik <lukasbownik99@gmail.com>
 Description: PikaFileService - File Synchronization Service
  A file watcher and synchronization daemon that monitors directories
  for changes and replicates them to a destination path, optionally
@@ -86,40 +90,71 @@ EOF
 chmod 755 "${PROJECT_DIR}/${PKG_DIR}/DEBIAN/preinst"
 
 # -- DEBIAN/postinst --
-cat > "${PROJECT_DIR}/${PKG_DIR}/DEBIAN/postinst" << 'EOF'
+# The postinst script parametrizes the systemd service file with the installing
+# user's username and launches the interactive configuration wizard.
+cat > "${PROJECT_DIR}/${PKG_DIR}/DEBIAN/postinst" << 'POSTINST'
 #!/bin/bash
 set -e
 
-# Create log directory (in case it was removed)
-mkdir -p /var/log/pikafileservice
-chown root:root /var/log/pikafileservice
+PKG_NAME="pikafileservice"
+SERVICE_FILE="/lib/systemd/system/${PKG_NAME}.service"
+CONFIG_DIR="/opt/${PKG_NAME}"
 
-# Reload systemd to pick up the service file
+# ── Determine service user ──────────────────────
+# Use SUDO_USER (the real user behind sudo) when available, otherwise the
+# invoking user.  Fall back to "root" as a last resort.
+SERVICE_USER="${SUDO_USER:-$(whoami)}"
+if [ -z "$SERVICE_USER" ] || [ "$SERVICE_USER" = "root" ]; then
+    # Interactive prompt so the admin can override
+    if [ -t 0 ] || [ -e /dev/tty ]; then
+        echo -n "Run the service as user [root]: " >&2
+        read input_user < /dev/tty || input_user=""
+        SERVICE_USER="${input_user:-root}"
+    else
+        SERVICE_USER="root"
+    fi
+fi
+
+# Replace the __SERVICE_USER__ placeholder inside the installed service file
+if [ -f "$SERVICE_FILE" ]; then
+    sed -i "s/__SERVICE_USER__/${SERVICE_USER}/g" "$SERVICE_FILE"
+fi
+
+# Create / fix ownership of log directory
+mkdir -p /var/log/${PKG_NAME}
+chown "${SERVICE_USER}:${SERVICE_USER}" /var/log/${PKG_NAME}
+
+# Reload systemd to pick up the (now parametrized) service file
 systemctl daemon-reload
 
-# Enable the service (but don't start — user must configure first)
-systemctl enable pikafileservice
+# Enable the service (don't start yet — the wizard configures first)
+systemctl enable ${PKG_NAME}
 
 echo ""
 echo "╔═══════════════════════════════════════════════════════╗"
 echo "║  PikaFileService installed successfully!              ║"
-echo "╠═══════════════════════════════════════════════════════╣"
-echo "║                                                       ║"
-echo "║  1. Edit the configuration:                           ║"
-echo "║     sudo nano /opt/pikafileservice/config.json        ║"
-echo "║                                                       ║"
-echo "║  2. Start the service:                                ║"
-echo "║     sudo systemctl start pikafileservice              ║"
-echo "║                                                       ║"
-echo "║  3. Check status:                                     ║"
-echo "║     sudo systemctl status pikafileservice             ║"
-echo "║                                                       ║"
-echo "║  Logs: sudo journalctl -u pikafileservice -f          ║"
+echo "║  Service will run as user: ${SERVICE_USER}"
 echo "╚═══════════════════════════════════════════════════════╝"
 echo ""
 
+# ── Launch interactive configuration wizard ──────
+# dpkg does not provide an interactive stdin, so we check for /dev/tty
+# and explicitly redirect it to the wizard.
+if [ -e /dev/tty ]; then
+    if [ -x "${CONFIG_DIR}/configure.sh" ]; then
+        echo "Launching interactive configuration wizard..."
+        echo ""
+        bash "${CONFIG_DIR}/configure.sh" < /dev/tty
+    fi
+else
+    echo "Non-interactive install detected. Skipping configuration wizard."
+    echo "Run the wizard manually after installation:"
+    echo "  sudo ${CONFIG_DIR}/configure.sh"
+    echo ""
+fi
+
 exit 0
-EOF
+POSTINST
 chmod 755 "${PROJECT_DIR}/${PKG_DIR}/DEBIAN/postinst"
 
 # -- DEBIAN/prerm --

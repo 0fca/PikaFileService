@@ -36,6 +36,13 @@ type UploadResponse struct {
 	TargetPath string `json:"targetPath"`
 }
 
+// BucketInfo represents a single bucket returned by the PikaCore Buckets endpoint
+type BucketInfo struct {
+	ID        string `json:"id"`
+	Name      string `json:"name"`
+	Encrypted bool   `json:"encrypted"`
+}
+
 // PikaCloudConnector handles file uploads to PikaCore storage API
 type PikaCloudConnector struct {
 	config         PikaCloudConfig
@@ -115,6 +122,12 @@ func (pc *PikaCloudConnector) setAuthCookie() {
 			Path:  "/",
 		},
 	})
+}
+
+// GetBucketID returns the default bucket ID from the config.
+// Used as a fallback when no per-folder bucket mapping is defined.
+func (pc *PikaCloudConnector) GetBucketID() string {
+	return pc.config.BucketID
 }
 
 // refreshAuthToken gets a fresh access token from the device flow auth and updates the .AspNet.Identity cookie.
@@ -412,6 +425,139 @@ func (pc *PikaCloudConnector) UploadFileWithCustomPath(filePath, targetPath stri
 	return nil, fmt.Errorf("upload failed after %d attempts: %v", pc.config.RetryCount, lastErr)
 }
 
+// UploadFileToBucket uploads a file with a custom target path to a specific bucket.
+// This is used when bucket mappings are configured — each folder maps to its own bucket.
+func (pc *PikaCloudConnector) UploadFileToBucket(filePath, targetPath, bucketID string) (*UploadResponse, error) {
+	if filePath == "" {
+		return nil, fmt.Errorf("file path cannot be empty")
+	}
+	if targetPath == "" {
+		return nil, fmt.Errorf("target path cannot be empty")
+	}
+	if bucketID == "" {
+		return nil, fmt.Errorf("bucket ID cannot be empty")
+	}
+
+	if _, err := os.Stat(filePath); os.IsNotExist(err) {
+		return nil, fmt.Errorf("file does not exist: %s", filePath)
+	}
+
+	log.Printf("Starting upload of file: %s to bucket: %s (path: %s)", filePath, bucketID, targetPath)
+
+	if err := pc.refreshAuthToken(); err != nil {
+		log.Printf("Warning: auth token refresh failed: %v", err)
+	}
+
+	if err := pc.FetchCSRFToken(); err != nil {
+		return nil, fmt.Errorf("failed to retrieve CSRF token: %v", err)
+	}
+
+	var lastErr error
+	for attempt := 1; attempt <= pc.config.RetryCount; attempt++ {
+		response, err := pc.attemptUploadToBucket(filePath, targetPath, bucketID, attempt)
+		if err == nil {
+			log.Printf("Successfully uploaded file: %s to bucket %s (attempt %d)",
+				filePath, bucketID, attempt)
+			return response, nil
+		}
+
+		lastErr = err
+		var rateLimitErr *RateLimitError
+		if errors.As(err, &rateLimitErr) {
+			log.Printf("Rate limited on attempt %d, waiting %v before retry", attempt, rateLimitErr.RetryAfter)
+			time.Sleep(rateLimitErr.RetryAfter)
+		} else if attempt < pc.config.RetryCount {
+			log.Printf("Upload attempt %d failed, retrying: %v", attempt, err)
+			time.Sleep(time.Duration(attempt) * time.Second)
+		}
+	}
+
+	return nil, fmt.Errorf("upload failed after %d attempts: %v", pc.config.RetryCount, lastErr)
+}
+
+// attemptUploadToBucket performs a single upload attempt to a specific bucket
+func (pc *PikaCloudConnector) attemptUploadToBucket(filePath, targetPath, bucketID string, attempt int) (*UploadResponse, error) {
+	file, err := os.Open(filePath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to open file: %v", err)
+	}
+	defer file.Close()
+
+	var requestBody bytes.Buffer
+	writer := multipart.NewWriter(&requestBody)
+
+	fileInfo, err := file.Stat()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get file info: %v", err)
+	}
+
+	fileName := filepath.Base(filePath)
+	part, err := writer.CreateFormFile(targetPath, fileName)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create form file: %v", err)
+	}
+
+	_, err = io.Copy(part, file)
+	if err != nil {
+		return nil, fmt.Errorf("failed to copy file content: %v", err)
+	}
+
+	err = writer.Close()
+	if err != nil {
+		return nil, fmt.Errorf("failed to close multipart writer: %v", err)
+	}
+
+	uploadURL := fmt.Sprintf("%s/Api/v1/Storage/%s",
+		strings.TrimRight(pc.config.BaseURL, "/"),
+		bucketID)
+
+	request, err := http.NewRequest("POST", uploadURL, &requestBody)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request: %v", err)
+	}
+
+	request.Header.Set("Content-Type", writer.FormDataContentType())
+	request.Header.Set("User-Agent", "PikaFileService/1.0")
+	if pc.csrfToken != "" {
+		request.Header.Set("X-CSRF-TOKEN", pc.csrfToken)
+	}
+
+	log.Printf("Attempt %d: Uploading %s (%d bytes) to bucket %s with target path: %s",
+		attempt, fileName, fileInfo.Size(), bucketID, targetPath)
+
+	response, err := pc.httpClient.Do(request)
+	if err != nil {
+		return nil, fmt.Errorf("failed to send request: %v", err)
+	}
+	defer response.Body.Close()
+
+	responseBody, err := io.ReadAll(response.Body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read response: %v", err)
+	}
+
+	if response.StatusCode == http.StatusTooManyRequests {
+		retryAfter := parseRetryAfter(response.Header.Get("Retry-After"))
+		return nil, &RateLimitError{
+			RetryAfter: retryAfter,
+			Message:    fmt.Sprintf("rate limited (429), retry after %v", retryAfter),
+		}
+	}
+
+	if response.StatusCode != http.StatusCreated {
+		return nil, fmt.Errorf("upload failed with status %d: %s",
+			response.StatusCode, string(responseBody))
+	}
+
+	var uploadResponse UploadResponse
+	err = json.Unmarshal(responseBody, &uploadResponse)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse response JSON: %v", err)
+	}
+
+	return &uploadResponse, nil
+}
+
 // attemptUploadWithPath performs a single upload attempt with custom path
 func (pc *PikaCloudConnector) attemptUploadWithPath(filePath, targetPath string, attempt int) (*UploadResponse, error) {
 	// Open the file
@@ -501,6 +647,48 @@ func (pc *PikaCloudConnector) attemptUploadWithPath(filePath, targetPath string,
 	}
 
 	return &uploadResponse, nil
+}
+
+// FetchBuckets retrieves the list of buckets the authenticated user has access to
+// via the GET /Api/v1/Storage/Buckets endpoint.
+func (pc *PikaCloudConnector) FetchBuckets() ([]BucketInfo, error) {
+	// Refresh auth token before fetching buckets
+	if err := pc.refreshAuthToken(); err != nil {
+		return nil, fmt.Errorf("auth token refresh failed: %v", err)
+	}
+
+	bucketsURL := fmt.Sprintf("%s/Api/v1/Storage/Buckets",
+		strings.TrimRight(pc.config.BaseURL, "/"))
+
+	request, err := http.NewRequest("GET", bucketsURL, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create buckets request: %v", err)
+	}
+	request.Header.Set("User-Agent", "PikaFileService/1.0")
+
+	response, err := pc.httpClient.Do(request)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch buckets: %v", err)
+	}
+	defer response.Body.Close()
+
+	if response.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(response.Body)
+		return nil, fmt.Errorf("buckets request failed with status %d: %s", response.StatusCode, string(body))
+	}
+
+	body, err := io.ReadAll(response.Body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read buckets response: %v", err)
+	}
+
+	var buckets []BucketInfo
+	if err := json.Unmarshal(body, &buckets); err != nil {
+		return nil, fmt.Errorf("failed to parse buckets response: %v", err)
+	}
+
+	log.Printf("Fetched %d bucket(s) from PikaCloud", len(buckets))
+	return buckets, nil
 }
 
 // TestConnection tests the connection to PikaCore API

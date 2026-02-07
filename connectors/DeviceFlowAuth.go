@@ -179,7 +179,7 @@ func (dfa *DeviceFlowAuth) runDeviceFlow() error {
 		fmt.Printf("  Or open directly: %s\n", deviceAuth.VerificationURIComplete)
 	}
 	fmt.Printf("  Code expires: %s\n", deviceAuth.Expiry.Format(time.RFC1123))
-	fmt.Println("  Waiting for authorization...")
+	fmt.Println("  Waiting for authorization to complete. After you are done, hit Enter to continue...")
 	fmt.Println()
 
 	// Poll token endpoint until user authorizes (or code expires)

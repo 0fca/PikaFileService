@@ -10,3 +10,4 @@ config.json
 *.service
 build/
 *.log
+deploy_deb_package.sh
