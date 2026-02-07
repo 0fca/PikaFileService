@@ -258,9 +258,9 @@ configure_cloud() {
         echo ""
         echo "  Skipping login. You can authenticate later by running:"
         echo "    sudo /opt/pikafileservice/pikafileservice -c ${CONFIG_FILE} --auth-only"
+        echo "  After authenticating, re-run this script to continue configuration, but the service won't work for now"
         echo ""
-        configure_cloud_write_config_no_buckets "$base_url" "$issuer_url" "$realm" "$client_id" "$scopes" "$token_file" "$timeout" "$retry_count"
-        return
+        exit 0
     fi
 
     # Write a temporary config with OAuth2 settings so the binary can perform device flow
@@ -274,9 +274,7 @@ configure_cloud() {
 
     cat > "$tmp_config" << EOF
 {
-    "folders": [],
     "workDir": "/tmp",
-    "dstPath": "/tmp",
     "pikaCloud": {
         "baseUrl": "${base_url}",
         "bucketId": "",
@@ -448,7 +446,7 @@ configure_cloud_directories() {
         echo ""
         for i in $(seq 0 $((${#bucket_ids[@]} - 1))); do
             if ask_yes_no "  Sync '${bucket_names[$i]}'?" "y"; then
-                local dir="${root_path}${bucket_names[$i]}"
+                local dir="${root_path}/${bucket_names[$i]}"
                 folders+=("$dir")
                 mapping_folders+=("$dir")
                 mapping_bucket_ids+=("${bucket_ids[$i]}")
@@ -494,19 +492,6 @@ configure_cloud_directories() {
     scopes_json=$(echo "$scopes" | sed 's/,/","/g')
     scopes_json="[\"${scopes_json}\"]"
 
-    # Build folders JSON array
-    local folders_json="["
-    local first=true
-    for f in "${folders[@]}"; do
-        if [ "$first" = true ]; then
-            first=false
-        else
-            folders_json+=","
-        fi
-        folders_json+="\"${f}\""
-    done
-    folders_json+="]"
-
     # Build bucketMappings JSON array
     local mappings_json="["
     first=true
@@ -522,9 +507,7 @@ configure_cloud_directories() {
 
     cat > "$CONFIG_FILE" << EOF
 {
-    "folders": ${folders_json},
     "workDir": "${root_path}",
-    "dstPath": "${root_path}",
     "pikaCloud": {
         "baseUrl": "${base_url}",
         "bucketId": "",
@@ -550,49 +533,6 @@ EOF
 
     echo ""
     echo "  ✓ Configuration written to ${CONFIG_FILE}"
-}
-
-configure_cloud_write_config_no_buckets() {
-    local base_url="$1"
-    local issuer_url="$2"
-    local realm="$3"
-    local client_id="$4"
-    local scopes="$5"
-    local token_file="$6"
-    local timeout="$7"
-    local retry_count="$8"
-
-    # Convert comma-separated scopes to JSON array
-    local scopes_json
-    scopes_json=$(echo "$scopes" | sed 's/,/","/g')
-    scopes_json="[\"${scopes_json}\"]"
-
-    # Write a skeleton config; user will need to fill in folders/bucketId later
-    cat > "$CONFIG_FILE" << EOF
-{
-    "folders": [],
-    "workDir": "/home/$USER/source",
-    "dstPath": "/home/$USER/destination",
-    "pikaCloud": {
-        "baseUrl": "${base_url}",
-        "bucketId": "",
-        "timeout": ${timeout},
-        "retryCount": ${retry_count},
-        "oauth2": {
-            "issuerUrl": "${issuer_url}",
-            "realm": "${realm}",
-            "clientId": "${client_id}",
-            "scopes": ${scopes_json},
-            "tokenFile": "${token_file}"
-        }
-    }
-}
-EOF
-    chmod 640 "$CONFIG_FILE"
-
-    echo ""
-    echo "  ✓ Skeleton configuration written to ${CONFIG_FILE}"
-    echo "  ⚠ You need to edit it and fill in folders, workDir, dstPath, and bucketId."
 }
 
 # ─────────────────────────────────────────────────

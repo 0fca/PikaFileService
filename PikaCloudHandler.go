@@ -13,11 +13,11 @@ import (
 type PikaCloudHandler struct {
 	connector      *connectors.PikaCloudConnector
 	enabled        bool
-	bucketMappings []BucketMapping
+	bucketMappings []connectors.BucketMapping
 }
 
 // NewPikaCloudHandler creates a new PikaCloud handler
-func NewPikaCloudHandler(config *connectors.PikaCloudConfig, mappings []BucketMapping) *PikaCloudHandler {
+func NewPikaCloudHandler(config *connectors.PikaCloudConfig, mappings []connectors.BucketMapping) *PikaCloudHandler {
 	if config == nil {
 		return &PikaCloudHandler{enabled: false}
 	}
@@ -43,11 +43,7 @@ func NewPikaCloudHandler(config *connectors.PikaCloudConfig, mappings []BucketMa
 }
 
 // HandleFileOperation processes file operations with PikaCloud integration
-func (pch *PikaCloudHandler) HandleFileOperation(event watcher.Event, dstPath string, workDir string) {
-	// First, execute the standard filesystem operation
-	executeFilesystemOperation(event, dstPath, workDir)
-
-	// If PikaCloud is enabled, also upload to cloud
+func (pch *PikaCloudHandler) HandleFileOperation(event watcher.Event, workDir string) {
 	if pch.enabled && pch.connector != nil {
 		pch.handleCloudOperation(event, workDir)
 	}

@@ -12,12 +12,7 @@ import (
 	"github.com/radovskyb/watcher"
 )
 
-// TODO: Log to file
-func StartFWatch(folders []string, dstPath string, workDir string) {
-	StartFWatchWithPikaCloud(folders, dstPath, workDir, &PikaCloudHandler{enabled: false})
-}
-
-func StartFWatchWithPikaCloud(folders []string, dstPath string, workDir string, pikaCloudHandler *PikaCloudHandler) {
+func StartFWatch(folders []string, dstPath string, workDir string, pikaCloudHandler *PikaCloudHandler) {
 	log.Println("Starting to watch folders:", folders)
 	w := watcher.New()
 	w.SetMaxEvents(10)
@@ -31,7 +26,7 @@ func StartFWatchWithPikaCloud(folders []string, dstPath string, workDir string, 
 			case event := <-w.Event:
 				log.Println("File Event Detected:", event.Path)
 				if pikaCloudHandler != nil && pikaCloudHandler.enabled {
-					pikaCloudHandler.HandleFileOperation(event, dstPath, workDir)
+					pikaCloudHandler.HandleFileOperation(event, workDir)
 				} else {
 					executeFilesystemOperation(event, dstPath, workDir)
 				}

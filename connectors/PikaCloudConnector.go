@@ -18,6 +18,13 @@ import (
 	"time"
 )
 
+// BucketMapping maps a watched folder to a specific PikaCloud bucket.
+// Each mapping results in files from that folder being uploaded to the designated bucket.
+type BucketMapping struct {
+	Folder   string `json:"folder"`   // Absolute path to the watched directory
+	BucketID string `json:"bucketId"` // PikaCloud bucket UUID for this folder
+}
+
 // PikaCloudConfig holds configuration for PikaCloud API connection
 type PikaCloudConfig struct {
 	BaseURL    string                  `json:"baseUrl"`    // e.g., "https://pikacore.example.com"
@@ -26,6 +33,7 @@ type PikaCloudConfig struct {
 	OAuth2     *OAuth2DeviceFlowConfig `json:"oauth2"`     // OAuth2 Device Flow config (preferred over static AuthToken)
 	Timeout    int                     `json:"timeout"`    // Request timeout in seconds
 	RetryCount int                     `json:"retryCount"` // Number of retry attempts
+	BucketMappings   []BucketMapping   `json:"bucketMappings,omitempty"`
 }
 
 // UploadResponse represents the response from PikaCore upload API

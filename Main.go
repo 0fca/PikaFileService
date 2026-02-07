@@ -91,14 +91,17 @@ func main() {
 	log.Println("PikaFileSync is starting...")
 
 	// Initialize PikaCloud handler with bucket mappings
-	pikaCloudHandler := NewPikaCloudHandler(c.PikaCloud, c.BucketMappings)
+	pikaCloudHandler := NewPikaCloudHandler(c.PikaCloud, c.PikaCloud.BucketMappings)
 	if pikaCloudHandler.IsEnabled() {
 		log.Println("PikaCloud integration enabled")
 	} else {
 		log.Println("PikaCloud integration disabled")
 	}
-
-	StartFWatchWithPikaCloud(c.Folders, c.Dst, c.WorkingDirectory, pikaCloudHandler)
+	folders := []string{}
+	for _, mapping := range c.PikaCloud.BucketMappings {
+		folders = append(folders, mapping.Folder)
+	}
+	StartFWatch(folders, c.Dst, c.WorkingDirectory, pikaCloudHandler)
 }
 
 func handleErrorOutput(outPath string) {

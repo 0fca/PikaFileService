@@ -131,3 +131,35 @@
 2026/02/06 14:20:05 Successfully uploaded to PikaCloud: CGID=7ce198fb-ca38-4e93-ae8f-ba5c8ef64b0a, Path=CfDJ8LsBlU4lsdhErj4p57UvBQUiWFh-yrIG8NvsBFXa_3A_qhZhCnI8Is3uN6UPAIb4wlAuGgik0JqQ6f-MT5YIqhd3ep1sT9HUxtYJcJMnwzHpxRwa1yx15RKVdnzXvTj9a7dLV6P9XqAOsYtq5fsYQotoanQMaLKzHEW-kxC4fJ5-8sYsJ6Ydm4syjUwOPoLpZaSZBnc966pNWvNXIlwxZ2wRqpurQygfUsXNt4wS_F1HFgoaA6dQ5aPPj_D9CWY07g
 2026/02/06 14:20:05 Successfully uploaded file: /home/ofca/sync/Screenshot from 2025-10-31 08-19-12.png to path: Screenshot from 2025-10-31 08-19-12.png (attempt 1)
 2026/02/06 14:20:05 Successfully uploaded to PikaCloud: CGID=bb26c58b-45ea-493e-9586-3829e86f7239, Path=CfDJ8LsBlU4lsdhErj4p57UvBQX70C43-tPKIwSJhT5u31AMn3dyanZTAKwNBZxDZApGFYPxucZGB7954r2tKbYzLlfByWDg6h_LYsAEax3D1ZqXxFNw8p2MBLBHHJ8h9L5j1EoACdskGdHEkgZjfjoFG30LLWoD3fTj5TD-KvwWe-pBNp0SYiglEYcrIylwjXzQqBJ10QAY9mlj3Vy5AMh4vWLU8hEp5PnLtBa_87RqsuW0ILQ0gcjfYWUcp4CAYWYxnw
+2026/02/07 23:23:02 PikaFileSync is starting...
+2026/02/07 23:23:02 Discovering OIDC endpoints from: https://idp.lukas-bownik.net/realms/global/.well-known/openid-configuration
+2026/02/07 23:23:02 Discovered token endpoint: https://idp.lukas-bownik.net/realms/global/protocol/openid-connect/token
+2026/02/07 23:23:02 Discovered device authorization endpoint: https://idp.lukas-bownik.net/realms/global/protocol/openid-connect/auth/device
+2026/02/07 23:23:02 Cached OAuth2 token expired, attempting refresh...
+2026/02/07 23:23:02 Token refresh failed, falling back to device flow: oauth2: "invalid_grant" "Token is not active"
+2026/02/07 23:23:53 OAuth2 device flow authentication successful
+2026/02/07 23:23:53 200
+2026/02/07 23:23:53 Connection test to PikaCore: Status 200 OK
+2026/02/07 23:23:53 PikaCloud connector initialized successfully
+2026/02/07 23:23:53 PikaCloud integration enabled
+2026/02/07 23:23:53 Starting to watch folders: []
+2026/02/07 23:24:00 PikaFileSync is starting...
+2026/02/07 23:24:00 Discovering OIDC endpoints from: https://idp.lukas-bownik.net/realms/global/.well-known/openid-configuration
+2026/02/07 23:24:00 Discovered token endpoint: https://idp.lukas-bownik.net/realms/global/protocol/openid-connect/token
+2026/02/07 23:24:00 Discovered device authorization endpoint: https://idp.lukas-bownik.net/realms/global/protocol/openid-connect/auth/device
+2026/02/07 23:24:00 Using cached OAuth2 token (still valid)
+2026/02/07 23:24:01 200
+2026/02/07 23:24:01 Connection test to PikaCore: Status 200 OK
+2026/02/07 23:24:01 PikaCloud connector initialized successfully
+2026/02/07 23:24:01 PikaCloud integration enabled
+2026/02/07 23:24:01 Starting to watch folders: []
+2026/02/07 23:27:50 PikaFileSync is starting...
+2026/02/07 23:27:50 Discovering OIDC endpoints from: https://idp.lukas-bownik.net/realms/global/.well-known/openid-configuration
+2026/02/07 23:27:50 Discovered token endpoint: https://idp.lukas-bownik.net/realms/global/protocol/openid-connect/token
+2026/02/07 23:27:50 Discovered device authorization endpoint: https://idp.lukas-bownik.net/realms/global/protocol/openid-connect/auth/device
+2026/02/07 23:27:50 Using cached OAuth2 token (still valid)
+2026/02/07 23:27:50 200
+2026/02/07 23:27:50 Connection test to PikaCore: Status 200 OK
+2026/02/07 23:27:50 PikaCloud connector initialized successfully
+2026/02/07 23:27:50 PikaCloud integration enabled
+2026/02/07 23:27:50 Starting to watch folders: []
