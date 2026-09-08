@@ -1,2 +1,165 @@
 2025/09/01 22:49:16 PikaFileSync is starting...
 2025/09/01 22:49:16 Starting to watch folders: [/home/ofca/sync]
+2026/02/06 15:05:03 PikaFileSync is starting...
+2026/02/06 15:05:03 Connection test to PikaCore: Status 401
+2026/02/06 15:05:03 PikaCloud connector initialized successfully
+2026/02/06 15:05:03 PikaCloud integration enabled
+2026/02/06 15:05:03 Starting to watch folders: [/home/ofca/sync]
+2026/02/06 14:10:59 PikaFileSync is starting...
+2026/02/06 14:10:59 Connection test to PikaCore: Status 401
+2026/02/06 14:10:59 PikaCloud connector initialized successfully
+2026/02/06 14:10:59 PikaCloud integration enabled
+2026/02/06 14:10:59 Starting to watch folders: [/home/ofca/sync]
+2026/02/06 14:13:52 PikaFileSync is starting...
+2026/02/06 14:13:52 Connection test to PikaCore: Status 401
+2026/02/06 14:13:52 PikaCloud connector initialized successfully
+2026/02/06 14:13:52 PikaCloud integration enabled
+2026/02/06 14:13:52 Starting to watch folders: [/home/ofca/sync]
+2026/02/06 14:14:24 PikaFileSync is starting...
+2026/02/06 14:14:24 Discovering OIDC endpoints from: https://idp.lukas-bownik.net/realms/global/.well-known/openid-configuration
+2026/02/06 14:14:24 Discovered token endpoint: https://idp.lukas-bownik.net/realms/global/protocol/openid-connect/token
+2026/02/06 14:14:24 Discovered device authorization endpoint: https://idp.lukas-bownik.net/realms/global/protocol/openid-connect/auth/device
+2026/02/06 14:14:54 OAuth2 device flow authentication successful
+2026/02/06 14:14:54 200
+2026/02/06 14:14:54 Connection test to PikaCore: Status 200 OK
+2026/02/06 14:14:54 PikaCloud connector initialized successfully
+2026/02/06 14:14:54 PikaCloud integration enabled
+2026/02/06 14:14:54 Starting to watch folders: [/home/ofca/sync]
+2026/02/06 14:15:48 PikaFileSync is starting...
+2026/02/06 14:15:48 Discovering OIDC endpoints from: https://idp.lukas-bownik.net/realms/global/.well-known/openid-configuration
+2026/02/06 14:15:48 Discovered token endpoint: https://idp.lukas-bownik.net/realms/global/protocol/openid-connect/token
+2026/02/06 14:15:48 Discovered device authorization endpoint: https://idp.lukas-bownik.net/realms/global/protocol/openid-connect/auth/device
+2026/02/06 14:15:48 Using cached OAuth2 token (still valid)
+2026/02/06 14:15:48 200
+2026/02/06 14:15:48 Connection test to PikaCore: Status 200 OK
+2026/02/06 14:15:48 PikaCloud connector initialized successfully
+2026/02/06 14:15:48 PikaCloud integration enabled
+2026/02/06 14:15:48 Starting to watch folders: [/home/ofca/sync]
+2026/02/06 14:16:28 File Event Detected: /home/ofca/sync
+2026/02/06 14:16:28 File Modification Detected: /home/ofca/sync
+2026/02/06 14:16:28 Current working directory: /home/ofca/sync
+2026/02/06 14:16:28 Destination path: /mnt/public
+2026/02/06 14:16:28 File path: /home/ofca/sync
+2026/02/06 14:16:28 File Event Detected: /home/ofca/sync/Screenshot from 2025-11-03 21-55-52.png
+2026/02/06 14:16:28 File Creation Detected: /home/ofca/sync/Screenshot from 2025-11-03 21-55-52.png
+2026/02/06 14:16:28 Current working directory: /home/ofca/sync
+2026/02/06 14:16:28 Destination path: /mnt/public
+2026/02/06 14:16:28 File path: /home/ofca/sync/Screenshot from 2025-11-03 21-55-52.png
+2026/02/06 14:16:28 Copying file from /home/ofca/sync/Screenshot from 2025-11-03 21-55-52.png to /mnt/public/Screenshot from 2025-11-03 21-55-52.png
+2026/02/06 14:16:28 Source file info: Screenshot from 2025-11-03 21-55-52.png 214353 -rw-r--r--
+2026/02/06 14:16:28 Source file is a regular file, can stat?
+2026/02/06 14:16:28 open /mnt/public/Screenshot from 2025-11-03 21-55-52.png: permission denied
+2026/02/06 14:16:28 Uploading file to PikaCloud: /home/ofca/sync/Screenshot from 2025-11-03 21-55-52.png -> Screenshot from 2025-11-03 21-55-52.png
+2026/02/06 14:16:28 File Event Detected: /home/ofca/sync/Screenshot from 2026-02-06 09-45-12.png
+2026/02/06 14:16:28 File Creation Detected: /home/ofca/sync/Screenshot from 2026-02-06 09-45-12.png
+2026/02/06 14:16:28 Current working directory: /home/ofca/sync
+2026/02/06 14:16:28 Destination path: /mnt/public
+2026/02/06 14:16:28 File path: /home/ofca/sync/Screenshot from 2026-02-06 09-45-12.png
+2026/02/06 14:16:28 Copying file from /home/ofca/sync/Screenshot from 2026-02-06 09-45-12.png to /mnt/public/Screenshot from 2026-02-06 09-45-12.png
+2026/02/06 14:16:28 Source file info: Screenshot from 2026-02-06 09-45-12.png 57565 -rw-r--r--
+2026/02/06 14:16:28 Source file is a regular file, can stat?
+2026/02/06 14:16:28 Starting upload of file: /home/ofca/sync/Screenshot from 2025-11-03 21-55-52.png to target path: Screenshot from 2025-11-03 21-55-52.png
+2026/02/06 14:16:28 open /mnt/public/Screenshot from 2026-02-06 09-45-12.png: permission denied
+2026/02/06 14:16:28 Uploading file to PikaCloud: /home/ofca/sync/Screenshot from 2026-02-06 09-45-12.png -> Screenshot from 2026-02-06 09-45-12.png
+2026/02/06 14:16:28 Starting upload of file: /home/ofca/sync/Screenshot from 2026-02-06 09-45-12.png to target path: Screenshot from 2026-02-06 09-45-12.png
+2026/02/06 14:16:28 Successfully retrieved CSRF token from Storage Index
+2026/02/06 14:16:28 Successfully retrieved CSRF token from Storage Index
+2026/02/06 14:16:28 Attempt 1: Uploading Screenshot from 2026-02-06 09-45-12.png (57565 bytes) to https://api-core.lukas-bownik.net/Api/v1/Storage/12345678-1234-1234-1234-123456789012 with target path: Screenshot from 2026-02-06 09-45-12.png
+2026/02/06 14:16:28 Attempt 1: Uploading Screenshot from 2025-11-03 21-55-52.png (214353 bytes) to https://api-core.lukas-bownik.net/Api/v1/Storage/12345678-1234-1234-1234-123456789012 with target path: Screenshot from 2025-11-03 21-55-52.png
+2026/02/06 14:16:28 Upload attempt 1 failed, retrying: upload failed with status 500: 
+2026/02/06 14:16:28 Upload attempt 1 failed, retrying: upload failed with status 500: 
+2026/02/06 14:16:29 Attempt 2: Uploading Screenshot from 2026-02-06 09-45-12.png (57565 bytes) to https://api-core.lukas-bownik.net/Api/v1/Storage/12345678-1234-1234-1234-123456789012 with target path: Screenshot from 2026-02-06 09-45-12.png
+2026/02/06 14:16:29 Attempt 2: Uploading Screenshot from 2025-11-03 21-55-52.png (214353 bytes) to https://api-core.lukas-bownik.net/Api/v1/Storage/12345678-1234-1234-1234-123456789012 with target path: Screenshot from 2025-11-03 21-55-52.png
+2026/02/06 14:16:29 Upload attempt 2 failed, retrying: upload failed with status 500: 
+2026/02/06 14:16:29 Upload attempt 2 failed, retrying: upload failed with status 500: 
+2026/02/06 14:16:31 Attempt 3: Uploading Screenshot from 2026-02-06 09-45-12.png (57565 bytes) to https://api-core.lukas-bownik.net/Api/v1/Storage/12345678-1234-1234-1234-123456789012 with target path: Screenshot from 2026-02-06 09-45-12.png
+2026/02/06 14:16:31 Attempt 3: Uploading Screenshot from 2025-11-03 21-55-52.png (214353 bytes) to https://api-core.lukas-bownik.net/Api/v1/Storage/12345678-1234-1234-1234-123456789012 with target path: Screenshot from 2025-11-03 21-55-52.png
+2026/02/06 14:16:31 Failed to upload file to PikaCloud: upload failed after 3 attempts: upload failed with status 500: 
+2026/02/06 14:16:31 Failed to upload file to PikaCloud: upload failed after 3 attempts: upload failed with status 500: 
+2026/02/06 14:18:39 PikaFileSync is starting...
+2026/02/06 14:18:39 Discovering OIDC endpoints from: https://idp.lukas-bownik.net/realms/global/.well-known/openid-configuration
+2026/02/06 14:18:39 Discovered token endpoint: https://idp.lukas-bownik.net/realms/global/protocol/openid-connect/token
+2026/02/06 14:18:39 Discovered device authorization endpoint: https://idp.lukas-bownik.net/realms/global/protocol/openid-connect/auth/device
+2026/02/06 14:18:39 Using cached OAuth2 token (still valid)
+2026/02/06 14:18:39 200
+2026/02/06 14:18:39 Connection test to PikaCore: Status 200 OK
+2026/02/06 14:18:39 PikaCloud connector initialized successfully
+2026/02/06 14:18:39 PikaCloud integration enabled
+2026/02/06 14:18:39 Starting to watch folders: [/home/ofca/sync]
+2026/02/06 14:19:14 File Event Detected: /home/ofca/sync
+2026/02/06 14:19:14 File Modification Detected: /home/ofca/sync
+2026/02/06 14:19:14 Current working directory: /home/ofca/sync
+2026/02/06 14:19:14 Destination path: /mnt/public
+2026/02/06 14:19:14 File path: /home/ofca/sync
+2026/02/06 14:19:15 File Event Detected: /home/ofca/sync
+2026/02/06 14:19:15 File Modification Detected: /home/ofca/sync
+2026/02/06 14:19:15 Current working directory: /home/ofca/sync
+2026/02/06 14:19:15 Destination path: /mnt/public
+2026/02/06 14:19:15 File path: /home/ofca/sync
+2026/02/06 14:20:04 File Event Detected: /home/ofca/sync
+2026/02/06 14:20:04 File Modification Detected: /home/ofca/sync
+2026/02/06 14:20:04 Current working directory: /home/ofca/sync
+2026/02/06 14:20:04 Destination path: /mnt/public
+2026/02/06 14:20:04 File path: /home/ofca/sync
+2026/02/06 14:20:04 File Event Detected: /home/ofca/sync/Screenshot from 2025-10-31 07-48-35.png
+2026/02/06 14:20:04 File Creation Detected: /home/ofca/sync/Screenshot from 2025-10-31 07-48-35.png
+2026/02/06 14:20:04 Current working directory: /home/ofca/sync
+2026/02/06 14:20:04 Destination path: /mnt/public
+2026/02/06 14:20:04 File path: /home/ofca/sync/Screenshot from 2025-10-31 07-48-35.png
+2026/02/06 14:20:04 Copying file from /home/ofca/sync/Screenshot from 2025-10-31 07-48-35.png to /mnt/public/Screenshot from 2025-10-31 07-48-35.png
+2026/02/06 14:20:04 Source file info: Screenshot from 2025-10-31 07-48-35.png 296218 -rw-r--r--
+2026/02/06 14:20:04 Source file is a regular file, can stat?
+2026/02/06 14:20:04 open /mnt/public/Screenshot from 2025-10-31 07-48-35.png: permission denied
+2026/02/06 14:20:04 Uploading file to PikaCloud: /home/ofca/sync/Screenshot from 2025-10-31 07-48-35.png -> Screenshot from 2025-10-31 07-48-35.png
+2026/02/06 14:20:04 File Event Detected: /home/ofca/sync/Screenshot from 2025-10-31 08-19-12.png
+2026/02/06 14:20:04 File Creation Detected: /home/ofca/sync/Screenshot from 2025-10-31 08-19-12.png
+2026/02/06 14:20:04 Current working directory: /home/ofca/sync
+2026/02/06 14:20:04 Destination path: /mnt/public
+2026/02/06 14:20:04 File path: /home/ofca/sync/Screenshot from 2025-10-31 08-19-12.png
+2026/02/06 14:20:04 Copying file from /home/ofca/sync/Screenshot from 2025-10-31 08-19-12.png to /mnt/public/Screenshot from 2025-10-31 08-19-12.png
+2026/02/06 14:20:04 Source file info: Screenshot from 2025-10-31 08-19-12.png 160937 -rw-r--r--
+2026/02/06 14:20:04 Source file is a regular file, can stat?
+2026/02/06 14:20:04 Starting upload of file: /home/ofca/sync/Screenshot from 2025-10-31 07-48-35.png to target path: Screenshot from 2025-10-31 07-48-35.png
+2026/02/06 14:20:04 open /mnt/public/Screenshot from 2025-10-31 08-19-12.png: permission denied
+2026/02/06 14:20:04 Uploading file to PikaCloud: /home/ofca/sync/Screenshot from 2025-10-31 08-19-12.png -> Screenshot from 2025-10-31 08-19-12.png
+2026/02/06 14:20:04 Starting upload of file: /home/ofca/sync/Screenshot from 2025-10-31 08-19-12.png to target path: Screenshot from 2025-10-31 08-19-12.png
+2026/02/06 14:20:05 Successfully retrieved CSRF token from Storage Index
+2026/02/06 14:20:05 Successfully retrieved CSRF token from Storage Index
+2026/02/06 14:20:05 Attempt 1: Uploading Screenshot from 2025-10-31 07-48-35.png (296218 bytes) to https://api-core.lukas-bownik.net/Api/v1/Storage/a35b2e09-e0f1-4912-b83f-076959ae896c with target path: Screenshot from 2025-10-31 07-48-35.png
+2026/02/06 14:20:05 Attempt 1: Uploading Screenshot from 2025-10-31 08-19-12.png (160937 bytes) to https://api-core.lukas-bownik.net/Api/v1/Storage/a35b2e09-e0f1-4912-b83f-076959ae896c with target path: Screenshot from 2025-10-31 08-19-12.png
+2026/02/06 14:20:05 Successfully uploaded file: /home/ofca/sync/Screenshot from 2025-10-31 07-48-35.png to path: Screenshot from 2025-10-31 07-48-35.png (attempt 1)
+2026/02/06 14:20:05 Successfully uploaded to PikaCloud: CGID=7ce198fb-ca38-4e93-ae8f-ba5c8ef64b0a, Path=CfDJ8LsBlU4lsdhErj4p57UvBQUiWFh-yrIG8NvsBFXa_3A_qhZhCnI8Is3uN6UPAIb4wlAuGgik0JqQ6f-MT5YIqhd3ep1sT9HUxtYJcJMnwzHpxRwa1yx15RKVdnzXvTj9a7dLV6P9XqAOsYtq5fsYQotoanQMaLKzHEW-kxC4fJ5-8sYsJ6Ydm4syjUwOPoLpZaSZBnc966pNWvNXIlwxZ2wRqpurQygfUsXNt4wS_F1HFgoaA6dQ5aPPj_D9CWY07g
+2026/02/06 14:20:05 Successfully uploaded file: /home/ofca/sync/Screenshot from 2025-10-31 08-19-12.png to path: Screenshot from 2025-10-31 08-19-12.png (attempt 1)
+2026/02/06 14:20:05 Successfully uploaded to PikaCloud: CGID=bb26c58b-45ea-493e-9586-3829e86f7239, Path=CfDJ8LsBlU4lsdhErj4p57UvBQX70C43-tPKIwSJhT5u31AMn3dyanZTAKwNBZxDZApGFYPxucZGB7954r2tKbYzLlfByWDg6h_LYsAEax3D1ZqXxFNw8p2MBLBHHJ8h9L5j1EoACdskGdHEkgZjfjoFG30LLWoD3fTj5TD-KvwWe-pBNp0SYiglEYcrIylwjXzQqBJ10QAY9mlj3Vy5AMh4vWLU8hEp5PnLtBa_87RqsuW0ILQ0gcjfYWUcp4CAYWYxnw
+2026/02/07 23:23:02 PikaFileSync is starting...
+2026/02/07 23:23:02 Discovering OIDC endpoints from: https://idp.lukas-bownik.net/realms/global/.well-known/openid-configuration
+2026/02/07 23:23:02 Discovered token endpoint: https://idp.lukas-bownik.net/realms/global/protocol/openid-connect/token
+2026/02/07 23:23:02 Discovered device authorization endpoint: https://idp.lukas-bownik.net/realms/global/protocol/openid-connect/auth/device
+2026/02/07 23:23:02 Cached OAuth2 token expired, attempting refresh...
+2026/02/07 23:23:02 Token refresh failed, falling back to device flow: oauth2: "invalid_grant" "Token is not active"
+2026/02/07 23:23:53 OAuth2 device flow authentication successful
+2026/02/07 23:23:53 200
+2026/02/07 23:23:53 Connection test to PikaCore: Status 200 OK
+2026/02/07 23:23:53 PikaCloud connector initialized successfully
+2026/02/07 23:23:53 PikaCloud integration enabled
+2026/02/07 23:23:53 Starting to watch folders: []
+2026/02/07 23:24:00 PikaFileSync is starting...
+2026/02/07 23:24:00 Discovering OIDC endpoints from: https://idp.lukas-bownik.net/realms/global/.well-known/openid-configuration
+2026/02/07 23:24:00 Discovered token endpoint: https://idp.lukas-bownik.net/realms/global/protocol/openid-connect/token
+2026/02/07 23:24:00 Discovered device authorization endpoint: https://idp.lukas-bownik.net/realms/global/protocol/openid-connect/auth/device
+2026/02/07 23:24:00 Using cached OAuth2 token (still valid)
+2026/02/07 23:24:01 200
+2026/02/07 23:24:01 Connection test to PikaCore: Status 200 OK
+2026/02/07 23:24:01 PikaCloud connector initialized successfully
+2026/02/07 23:24:01 PikaCloud integration enabled
+2026/02/07 23:24:01 Starting to watch folders: []
+2026/02/07 23:27:50 PikaFileSync is starting...
+2026/02/07 23:27:50 Discovering OIDC endpoints from: https://idp.lukas-bownik.net/realms/global/.well-known/openid-configuration
+2026/02/07 23:27:50 Discovered token endpoint: https://idp.lukas-bownik.net/realms/global/protocol/openid-connect/token
+2026/02/07 23:27:50 Discovered device authorization endpoint: https://idp.lukas-bownik.net/realms/global/protocol/openid-connect/auth/device
+2026/02/07 23:27:50 Using cached OAuth2 token (still valid)
+2026/02/07 23:27:50 200
+2026/02/07 23:27:50 Connection test to PikaCore: Status 200 OK
+2026/02/07 23:27:50 PikaCloud connector initialized successfully
+2026/02/07 23:27:50 PikaCloud integration enabled
+2026/02/07 23:27:50 Starting to watch folders: []
